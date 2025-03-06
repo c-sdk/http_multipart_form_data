@@ -3,3 +3,5 @@
 -I./deps/arena
 -I./deps/arrays
 -I./deps/string_map
+-I./deps/strnstr
+

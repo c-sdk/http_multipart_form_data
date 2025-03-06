@@ -8,6 +8,7 @@
   "dependencies": {
     "c-sdk/arena": "*",
     "c-sdk/arrays": "*",
-    "c-sdk/string_map": "*"
+    "c-sdk/string_map": "*",
+    "c-sdk/strnstrx": "*"
   }
 }
