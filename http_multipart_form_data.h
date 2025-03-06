@@ -8,7 +8,7 @@
 #endif
 
 #include "arena.h"
-#include "list.h"
+#include "array.h"
 #include "string_map.h"
 
 struct http_multipart_form_data_part_t {

@@ -4,5 +4,10 @@
   "repo": "c-sdk/http_multipart_form_data",
   "description": "Implementation of RFC 7578 \"Returning Values from Forms: multipart/form-data\".",
   "license": "Unlicense",
-  "src": ["./http_multipart_form_data.h", "./http_multipart_form_data.c"]
+  "src": ["./http_multipart_form_data.h", "./http_multipart_form_data.c"],
+  "dependencies": {
+    "c-sdk/arena": "*",
+    "c-sdk/arrays": "*",
+    "c-sdk/string_map": "*"
+  }
 }
