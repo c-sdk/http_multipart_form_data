@@ -1,6 +1,12 @@
 #ifndef __AIL_HTTP_MULTIPART_FORM_DATA_H__
 #define __AIL_HTTP_MULTIPART_FORM_DATA_H__ 1
 
+#ifdef LOG_HTTP_MULTIPART_FORM_DATA
+#define http_multipart_form_data_log(...) printf(__VA_ARGS__)
+#else
+#define http_multipart_form_data_log(...)
+#endif
+
 #include "arena.h"
 #include "list.h"
 #include "string_map.h"
