@@ -1,0 +1,5 @@
+-std=c11
+-I./
+-I./deps/arena
+-I./deps/arrays
+-I./deps/string_map
