@@ -107,8 +107,8 @@ void test_parse_multipart_content() {
 
 int main(void) {
   printf("test http multipart form data\n");
-  // test_parse_a_valid_content_type();
-  // test_fail_to_parse_when_missing_boundary();
+  test_parse_a_valid_content_type();
+  test_fail_to_parse_when_missing_boundary();
   test_parse_multipart_content();
   printf("done.\n");
   return 0;

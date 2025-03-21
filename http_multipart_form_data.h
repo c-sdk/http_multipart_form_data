@@ -37,7 +37,7 @@ int http_multipart_form_data_parse_content(arena_t* arena,
                                            const char* text);
 
 int http_multipart_form_data_parse(arena_t* arena,
-                                   struct string_map_t* request_headers,
+                                   const char* const content_type,
                                    const char* const request_content,
                                    struct http_multipart_form_data_t* formdata);
 

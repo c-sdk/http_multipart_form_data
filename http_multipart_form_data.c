@@ -30,10 +30,9 @@ static void read_header_key_value_pair(arena_t* arena,
 
 // TODO(dias): implement quoted boundary.
 // const char *header = "multipart/form-data; boundary=\"WebKitFormBoundaryXYZ\"";
-int http_multipart_form_data_parse_content_type_header(
-  arena_t* arena,
-  struct http_multipart_form_data_t* data,
-  const char* text) {
+int http_multipart_form_data_parse_content_type_header(arena_t* arena,
+                                                       struct http_multipart_form_data_t* data,
+                                                       const char* text) {
   size_t length = strlen(text);
   assert(arena && data && text && length > 0);
 
@@ -178,25 +177,25 @@ int http_multipart_form_data_parse_content(arena_t *arena,
 }
 
 int http_multipart_form_data_parse(arena_t* arena,
-                                   struct string_map_t* request_headers,
+                                   const char* const content_type,
                                    const char* const request_content,
                                    struct http_multipart_form_data_t* formdata) {
-  char* content_type =
-    string_map_find_by_key(request_headers,
-                           NULL,
-                           "Content-Type");
+  int res = http_multipart_form_data_parse_content_type_header(arena,
+                                                               formdata,
+                                                               content_type);
 
-    int res = http_multipart_form_data_parse_content_type_header(arena,
-                                                                 formdata,
-                                                                 content_type);
-    struct string_map_entry_t *found_item = NULL;
-    char* boundary_name = string_map_find_by_key(&formdata->attributes,
-                                                 &found_item,
-                                                 "boundary");
-
-    res = http_multipart_form_data_parse_content(arena,
-                                                 &formdata->parts,
-                                                 boundary_name,
-                                                 request_content);
+  if (res == -1) {
     return res;
+  }
+
+  struct string_map_entry_t *found_item = NULL;
+  char* boundary_name = string_map_find_by_key(&formdata->attributes,
+                                               &found_item,
+                                               "boundary");
+
+  res = http_multipart_form_data_parse_content(arena,
+                                               &formdata->parts,
+                                               boundary_name,
+                                               request_content);
+  return res;
 }
