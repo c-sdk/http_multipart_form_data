@@ -5,6 +5,7 @@
 
 #include "arena.h"
 #include "http_multipart_form_data.h"
+#include "status.h"
 #include "string_map.h"
 
 
@@ -64,12 +65,12 @@ void test_parse_multipart_content() {
 
   struct http_multipart_form_data_t result = {0};
   http_multipart_form_data_init(&arena, &result);
-  int res = http_multipart_form_data_parse_content(&arena,
-                                                   &result.parts,
-                                                   boundary,
-                                                   request_body);
+  enum status_t res = http_multipart_form_data_parse_content(&arena,
+                                                             &result.parts,
+                                                             boundary,
+                                                             request_body);
 
-  assert(res == 0);
+  assert(status_is_ok(res));
   struct http_multipart_form_data_part_t* item = NULL;
 
   {
@@ -102,7 +103,6 @@ void test_parse_multipart_content() {
     char* content = "{\"key\": \"value\"}";
     assert(memcmp(item->content, content, strlen(content)) == 0);
   }
-
 }
 
 int main(void) {

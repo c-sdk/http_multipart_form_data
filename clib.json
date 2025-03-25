@@ -9,6 +9,7 @@
     "c-sdk/arena": "*",
     "c-sdk/arrays": "*",
     "c-sdk/string_map": "*",
-    "c-sdk/strnstr": "*"
+    "c-sdk/strnstr": "*",
+    "c-sdk/status_type": "*"
   }
 }

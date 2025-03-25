@@ -1,7 +1,7 @@
 #include <assert.h>
-#include <stdbool.h>
 #include <string.h>
 
+#include "status.h"
 #include "arena.h"
 #include "array.h"
 #include "string_map.h"
@@ -30,9 +30,9 @@ static void read_header_key_value_pair(arena_t* arena,
 
 // TODO(dias): implement quoted boundary.
 // const char *header = "multipart/form-data; boundary=\"WebKitFormBoundaryXYZ\"";
-int http_multipart_form_data_parse_content_type_header(arena_t* arena,
-                                                       struct http_multipart_form_data_t* data,
-                                                       const char* text) {
+enum status_t http_multipart_form_data_parse_content_type_header(arena_t* arena,
+                                                                 struct http_multipart_form_data_t* data,
+                                                                 const char* text) {
   size_t length = strlen(text);
   assert(arena && data && text && length > 0);
 
@@ -41,7 +41,7 @@ int http_multipart_form_data_parse_content_type_header(arena_t* arena,
   // NOTE: if separator is not found, only the content-type exists
   // and it is illegal.
   if (separator == NULL) {
-    return -1;
+    return STATUS_FAILURE;
   }
 
   data->mime_type = arena_string_with_null(arena, text, separator - text + 1);
@@ -73,7 +73,7 @@ int http_multipart_form_data_parse_content_type_header(arena_t* arena,
 
   struct string_map_entry_t *found_item = NULL;
   (void)string_map_find_by_key(&data->attributes, &found_item, "boundary");
-  return (found_item != NULL) - 1;
+  return (found_item != NULL) ? STATUS_OK : STATUS_FAILURE;
 }
 
 struct http_multipart_form_data_part_t* http_multipart_form_data_create(arena_t* arena) {
@@ -87,12 +87,12 @@ struct http_multipart_form_data_part_t* http_multipart_form_data_create(arena_t*
   return part;
 }
 
-static bool inline is_init_boundary(const char* position) {
-  return position[0] == '-' && position[1] == '-';
+static enum status_t inline is_init_boundary(const char* position) {
+  return position[0] == '-' && position[1] == '-' ? STATUS_OK : STATUS_FAILURE;
 }
 
-static bool inline is_end_of_line(const char *position) {
-  return position[0] == '\r' && position[1] == '\n';
+static enum status_t inline is_end_of_line(const char *position) {
+  return position[0] == '\r' && position[1] == '\n' ? STATUS_OK : STATUS_FAILURE;
 }
 
 enum hmfp_states_t {
@@ -106,10 +106,10 @@ struct _parser_state_t {
   enum hmfp_states_t state;
 };
 
-int http_multipart_form_data_parse_content(arena_t *arena,
-                                           struct array_t *parts,
-                                           const char *const boundary,
-                                           const char *text) {
+enum status_t http_multipart_form_data_parse_content(arena_t *arena,
+                                                     struct array_t *parts,
+                                                     const char *const boundary,
+                                                     const char *text) {
   struct _parser_state_t parser = {0};
 
   char* position = (char*)text;
@@ -119,8 +119,8 @@ int http_multipart_form_data_parse_content(arena_t *arena,
   while (parser.state != HTTP_MULTIPART_FORM_DATA_PART_DONE) {
     switch (parser.state) {
     case HTTP_MULTIPART_FORM_DATA_BOUNDARY_NAME: {
-      if (is_init_boundary(position) == false) {
-        return -1;
+      if (is_init_boundary(position) == STATUS_FAILURE) {
+        return STATUS_FAILURE;
       }
 
       position += 2;
@@ -128,16 +128,16 @@ int http_multipart_form_data_parse_content(arena_t *arena,
       int length = strlen(boundary);
       if (memcmp(position, boundary, length) != 0) {
         http_multipart_form_data_log("Error: Expected http multpart form data boundary.");
-        return -1;
+        return STATUS_FAILURE;
       }
       position += length;
 
-      if (is_end_of_line(position)) {
+      if (status_is_ok(is_end_of_line(position))) {
         http_multipart_form_data_log("Found http multpart form data part.");
         part = http_multipart_form_data_create(arena);
         array_add(parts, part);
         parser.state = HTTP_MULTIPART_FORM_DATA_PART_HEADER_LINE;
-      } else if (is_init_boundary(position) == true) {
+      } else if (status_is_ok(is_init_boundary(position))) {
         parser.state = HTTP_MULTIPART_FORM_DATA_PART_DONE;
       }
 
@@ -154,7 +154,7 @@ int http_multipart_form_data_parse_content(arena_t *arena,
       char* separator = strchr(position, ':');
       if (separator == NULL) {
         http_multipart_form_data_log("Error: Expected header separator ':'");
-        return -1;
+        return STATUS_FAILURE;
       }
       const char* key = arena_string_with_null(arena, position, (separator - position + 1));
       while (*++separator != 0 && *separator == ' ');
@@ -173,20 +173,16 @@ int http_multipart_form_data_parse_content(arena_t *arena,
     }
   }
 
-  return 0;
+  return STATUS_OK;
 }
 
-int http_multipart_form_data_parse(arena_t* arena,
-                                   const char* const content_type,
-                                   const char* const request_content,
-                                   struct http_multipart_form_data_t* formdata) {
-  int res = http_multipart_form_data_parse_content_type_header(arena,
-                                                               formdata,
-                                                               content_type);
-
-  if (res == -1) {
-    return res;
-  }
+enum status_t http_multipart_form_data_parse(arena_t* arena,
+                                             const char* const content_type,
+                                             const char* const request_content,
+                                             struct http_multipart_form_data_t* formdata) {
+  enum status_t res = http_multipart_form_data_parse_content_type_header(arena,
+                                                                         formdata,
+                                                                         content_type);
 
   struct string_map_entry_t *found_item = NULL;
   char* boundary_name = string_map_find_by_key(&formdata->attributes,
